@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, Alert, Platform, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { rtdb } from "../database/firebase";
 import { ref, remove } from "firebase/database";
 import { GlobalStyle as GS } from "../styles/GlobalStyle";
 
-// Dansk label-tekst til visning
 const labels = {
   brand: "Mærke",
   model: "Model",
@@ -17,16 +17,16 @@ export default function CarDetails({ navigation, route }) {
   const id = route?.params?.car?.[0];
   const data = route?.params?.car?.[1];
 
-  // Indlæs bil-data fra navigationens parametre
+  // Indlæs bil fra navigationens parametre
   useEffect(() => {
     setBil(data ?? null);
     return () => setBil(null);
   }, []);
 
-  // Gå til redigering med samme data/format
+  // Navigér til redigering
   const rediger = () => navigation.navigate("Edit Car", { car: [id, bil] });
 
-  // Slet bil i databasen
+  // Slet bil
   const slet = async () => {
     try {
       await remove(ref(rtdb, `Cars/${id}`));
@@ -36,7 +36,7 @@ export default function CarDetails({ navigation, route }) {
     }
   };
 
-  // Bekræft sletning (native alert på mobil)
+  // Bekræft sletning
   const bekræftSlet = () => {
     if (Platform.OS === "ios" || Platform.OS === "android") {
       Alert.alert("Er du sikker?", "Vil du slette bilen?", [
@@ -49,21 +49,31 @@ export default function CarDetails({ navigation, route }) {
     }
   };
 
-  if (!bil) return <View style={GS.center}><Text>Ingen data</Text></View>;
+  if (!bil) {
+    return (
+      <SafeAreaView style={GS.container}>
+        <View style={GS.center}>
+          <Text>Ingen data</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={GS.skærmIndhold}>
-      {Object.entries(bil).map(([nøgle, værdi]) => (
-        <View style={GS.rækkeMedBundlinje} key={nøgle}>
-          <Text style={GS.etiket}>{labels[nøgle] ?? nøgle}</Text>
-          <Text style={GS.værdi}>{String(værdi)}</Text>
-        </View>
-      ))}
+    <SafeAreaView style={GS.container}>
+      <ScrollView contentContainerStyle={GS.skærmIndhold}>
+        {Object.entries(bil).map(([nøgle, værdi]) => (
+          <View style={GS.kort} key={nøgle}>
+            <Text style={GS.etiket}>{labels[nøgle] ?? nøgle}</Text>
+            <Text style={GS.værdi}>{String(værdi)}</Text>
+          </View>
+        ))}
 
-      <View style={{ height: 12 }} />
-      <Button title="Redigér" onPress={rediger} />
-      <View style={{ height: 8 }} />
-      <Button title="Slet" color="#d33" onPress={bekræftSlet} />
-    </ScrollView>
+        <View style={{ height: 12 }} />
+        <Button title="Redigér" onPress={rediger} />
+        <View style={{ height: 8 }} />
+        <Button title="Slet" color="#d33" onPress={bekræftSlet} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
